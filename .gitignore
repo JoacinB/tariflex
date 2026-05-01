@@ -28,3 +28,16 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# Ignore Laravel 13 AI files and generated stuff
+CLAUDE.boost.md
+CLAUDE.md
+GEMINI.md
+.gemini
+.agents/
+.claude/
+database/
+docs/
+.mcp.json
+.npmrc
+boost.json
