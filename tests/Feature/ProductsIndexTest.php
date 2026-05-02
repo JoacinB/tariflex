@@ -34,4 +34,18 @@ final class ProductsIndexTest extends TestCase
         $response->assertOk();
         $response->assertJsonCount(2, 'data');
     }
+
+    public function test_filters_products_by_brand_and_reference(): void
+    {
+        $acme = Brand::factory()->create(['name' => 'Acme']);
+
+        $target = Product::factory()->for($acme)->create(['supplier_reference' => 'A-001']);
+        Product::factory()->for($acme)->create(['supplier_reference' => 'A-002']);
+
+        $response = $this->getJson('/api/products?brand=Acme&reference=A-001');
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', $target->id);
+    }
 }
