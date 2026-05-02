@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Importing;
 
-use App\Importing\Contracts\SupplierParser;
 use App\Importing\DTOs\ImportedProductDTO;
 use App\Importing\DTOs\ImportSummary;
 use App\Models\Brand;
@@ -15,15 +14,16 @@ use Throwable;
 
 final class ImportService
 {
-    public function __construct(private SupplierParser $parser) {}
+    public function __construct(private ParserRegistry $registry) {}
 
     public function import(string $supplierCode, string $filePath): ImportSummary
     {
         $supplier = Supplier::where('code', $supplierCode)->firstOrFail();
+        $parser = $this->registry->resolve($supplierCode);
         $summary = new ImportSummary;
 
         $row = 0;
-        foreach ($this->parser->parse($filePath) as $dto) {
+        foreach ($parser->parse($filePath) as $dto) {
             $row++;
 
             try {
