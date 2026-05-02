@@ -22,6 +22,14 @@ final class ProductResource extends JsonResource
                 'price' => (float) $price->price,
                 'currency' => $price->currency,
             ])->all(),
+            'taxes' => $this->taxes->map(fn ($tax) => [
+                'country_code' => $tax->country_code,
+                'unit' => $tax->unit,
+                'type' => $tax->type,
+                'rate' => $tax->rate !== null ? (float) $tax->rate : null,
+                'amount' => $tax->amount !== null ? (float) $tax->amount : null,
+                'currency' => $tax->currency,
+            ])->all(),
         ];
     }
 }

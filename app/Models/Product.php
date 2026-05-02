@@ -26,6 +26,11 @@ class Product extends Model
         return $this->hasMany(ProductPrice::class)->orderBy('min_quantity');
     }
 
+    public function taxes(): HasMany
+    {
+        return $this->hasMany(ProductTax::class);
+    }
+
     public function scopeOfBrand(Builder $query, string $name): void
     {
         $query->whereHas('brand', fn (Builder $q) => $q->where('name', $name));

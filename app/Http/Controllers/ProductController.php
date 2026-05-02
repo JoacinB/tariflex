@@ -15,7 +15,7 @@ final class ProductController extends Controller
     {
         return ProductResource::collection(
             Product::query()
-                ->with('prices')
+                ->with(['prices', 'taxes'])
                 ->when(
                     $request->filled('brand'),
                     fn ($query) => $query->ofBrand((string) $request->string('brand'))
