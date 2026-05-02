@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Importing;
 
-use App\Importing\Contracts\SupplierParser;
 use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
 use App\Importing\DTOs\ImportedTaxDTO;
@@ -14,6 +13,7 @@ use App\Models\Product;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
+use Tests\Support\FakeSupplierParser;
 use Tests\TestCase;
 
 final class ImportServiceTest extends TestCase
@@ -41,17 +41,7 @@ final class ImportServiceTest extends TestCase
             ],
         );
 
-        $parser = new class($dto) implements SupplierParser
-        {
-            public function __construct(private ImportedProductDTO $dto) {}
-
-            public function parse(string $filePath): iterable
-            {
-                yield $this->dto;
-            }
-        };
-
-        $summary = (new ImportService($parser))->import('fake', '/dev/null');
+        $summary = $this->serviceWithDtos([$dto])->import('fake', '/dev/null');
 
         $this->assertSame(1, $summary->created);
         $this->assertSame(0, $summary->updated);
@@ -80,17 +70,7 @@ final class ImportServiceTest extends TestCase
             )],
         );
 
-        $parser = new class($dto) implements SupplierParser
-        {
-            public function __construct(private ImportedProductDTO $dto) {}
-
-            public function parse(string $filePath): iterable
-            {
-                yield $this->dto;
-            }
-        };
-
-        $service = new ImportService($parser);
+        $service = $this->serviceWithDtos([$dto]);
         $service->import('fake', '/dev/null');
         $second = $service->import('fake', '/dev/null');
 
@@ -129,18 +109,7 @@ final class ImportServiceTest extends TestCase
             ),
         ];
 
-        $parser = new class($dtos) implements SupplierParser
-        {
-            /** @param  list<ImportedProductDTO>  $dtos */
-            public function __construct(private array $dtos) {}
-
-            public function parse(string $filePath): iterable
-            {
-                yield from $this->dtos;
-            }
-        };
-
-        $summary = (new ImportService($parser))->import('fake', '/dev/null');
+        $summary = $this->serviceWithDtos($dtos)->import('fake', '/dev/null');
 
         $this->assertSame(2, $summary->created);
         $this->assertSame(0, $summary->updated);
@@ -152,5 +121,16 @@ final class ImportServiceTest extends TestCase
         $this->assertFalse(Product::where('supplier_reference', 'F-002')->exists());
         $this->assertTrue(Product::where('supplier_reference', 'F-003')->exists());
         $this->assertFalse(Brand::where('name', 'BROKEN')->exists());
+    }
+
+    /**
+     * @param  list<ImportedProductDTO>  $dtos
+     */
+    private function serviceWithDtos(array $dtos): ImportService
+    {
+        $this->app->instance(FakeSupplierParser::class, new FakeSupplierParser($dtos));
+        config()->set('importing.parsers', ['fake' => FakeSupplierParser::class]);
+
+        return $this->app->make(ImportService::class);
     }
 }
