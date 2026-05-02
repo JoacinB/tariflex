@@ -9,9 +9,11 @@ use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
 use App\Importing\DTOs\ImportedTaxDTO;
 use App\Importing\ImportService;
+use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Tests\TestCase;
 
 final class ImportServiceTest extends TestCase
@@ -97,5 +99,58 @@ final class ImportServiceTest extends TestCase
         $this->assertSame(1, Product::count());
         $this->assertSame(1, Product::firstOrFail()->prices()->count());
         $this->assertSame(1, Product::firstOrFail()->taxes()->count());
+    }
+
+    public function test_failure_on_one_dto_isolates_to_that_row_and_collects_error(): void
+    {
+        Supplier::factory()->create(['code' => 'fake', 'name' => 'Fake Co.']);
+
+        Brand::saving(function (Brand $brand): void {
+            if ($brand->name === 'BROKEN') {
+                throw new RuntimeException('persistence boom');
+            }
+        });
+
+        $dtos = [
+            new ImportedProductDTO(
+                supplierReference: 'F-001',
+                brand: 'Alpha',
+                prices: [new ImportedPriceDTO(minQuantity: 1, price: 10.0, currency: 'EUR')],
+            ),
+            new ImportedProductDTO(
+                supplierReference: 'F-002',
+                brand: 'BROKEN',
+                prices: [new ImportedPriceDTO(minQuantity: 1, price: 20.0, currency: 'EUR')],
+            ),
+            new ImportedProductDTO(
+                supplierReference: 'F-003',
+                brand: 'Gamma',
+                prices: [new ImportedPriceDTO(minQuantity: 1, price: 30.0, currency: 'EUR')],
+            ),
+        ];
+
+        $parser = new class($dtos) implements SupplierParser
+        {
+            /** @param  list<ImportedProductDTO>  $dtos */
+            public function __construct(private array $dtos) {}
+
+            public function parse(string $filePath): iterable
+            {
+                yield from $this->dtos;
+            }
+        };
+
+        $summary = (new ImportService($parser))->import('fake', '/dev/null');
+
+        $this->assertSame(2, $summary->created);
+        $this->assertSame(0, $summary->updated);
+        $this->assertCount(1, $summary->errors);
+        $this->assertSame(2, $summary->errors[0]['row']);
+        $this->assertStringContainsString('persistence boom', $summary->errors[0]['error']);
+
+        $this->assertTrue(Product::where('supplier_reference', 'F-001')->exists());
+        $this->assertFalse(Product::where('supplier_reference', 'F-002')->exists());
+        $this->assertTrue(Product::where('supplier_reference', 'F-003')->exists());
+        $this->assertFalse(Brand::where('name', 'BROKEN')->exists());
     }
 }
