@@ -54,7 +54,7 @@ GEMINI.md
 .gemini
 .agents/
 .claude/
-database/
+*.sqlite
 docs/
 .mcp.json
 .npmrc
