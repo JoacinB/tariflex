@@ -30,13 +30,31 @@ Homestead.json
 auth.json
 
 # Ignore Laravel 13 AI files and generated stuff
+*.log
+.DS_Store
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+_ide_helper.php
+Thumbs.db
 CLAUDE.boost.md
 CLAUDE.md
 GEMINI.md
 .gemini
 .agents/
 .claude/
-database/
+*.sqlite
 docs/
 .mcp.json
 .npmrc
