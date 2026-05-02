@@ -13,12 +13,13 @@ final class ProductController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Product::query();
-
-        if ($request->filled('brand')) {
-            $query->whereHas('brand', fn ($q) => $q->where('name', $request->string('brand')));
-        }
-
-        return JsonResource::collection($query->paginate());
+        return JsonResource::collection(
+            Product::query()
+                ->when(
+                    $request->filled('brand'),
+                    fn ($query) => $query->ofBrand((string) $request->string('brand'))
+                )
+                ->paginate()
+        );
     }
 }
