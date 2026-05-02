@@ -6,6 +6,7 @@ namespace Tests\Unit\Importing\Parsers;
 
 use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
+use App\Importing\DTOs\ImportedTaxDTO;
 use App\Importing\Parsers\AcmeParser;
 use PHPUnit\Framework\TestCase;
 
@@ -34,6 +35,19 @@ final class AcmeParserTest extends TestCase
                 new ImportedPriceDTO(minQuantity: 50, price: 80.0, currency: 'EUR'),
             ],
             $dtos[0]->prices,
+        );
+    }
+
+    public function test_yields_a_percentage_tax_dto_per_filled_country_column(): void
+    {
+        $dtos = iterator_to_array((new AcmeParser)->parse(self::FIXTURE), false);
+
+        $this->assertEquals(
+            [
+                new ImportedTaxDTO(countryCode: 'ES', type: 'percentage', rate: 21.0, amount: null, currency: null),
+                new ImportedTaxDTO(countryCode: 'FR', type: 'percentage', rate: 20.0, amount: null, currency: null),
+            ],
+            $dtos[0]->taxes,
         );
     }
 }
