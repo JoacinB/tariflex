@@ -35,6 +35,19 @@ final class ProductsIndexTest extends TestCase
         $response->assertJsonCount(2, 'data');
     }
 
+    public function test_response_includes_pagination_metadata(): void
+    {
+        Product::factory()->count(7)->create();
+
+        $response = $this->getJson('/api/products?per_page=5&page=2');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonPath('meta.current_page', 2);
+        $response->assertJsonPath('meta.per_page', 5);
+        $response->assertJsonPath('meta.total', 7);
+    }
+
     public function test_filters_products_by_brand_and_reference(): void
     {
         $acme = Brand::factory()->create(['name' => 'Acme']);
