@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Brand;
 use App\Models\Product;
+use App\Models\ProductPrice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -46,6 +47,28 @@ final class ProductsIndexTest extends TestCase
         $response->assertJsonPath('meta.current_page', 2);
         $response->assertJsonPath('meta.per_page', 5);
         $response->assertJsonPath('meta.total', 7);
+    }
+
+    public function test_response_includes_price_tiers_ordered_by_min_quantity(): void
+    {
+        $product = Product::factory()->create();
+        ProductPrice::factory()->for($product)->create([
+            'min_quantity' => 10,
+            'price' => 8.50,
+            'currency' => 'EUR',
+        ]);
+        ProductPrice::factory()->for($product)->create([
+            'min_quantity' => 1,
+            'price' => 10.00,
+            'currency' => 'EUR',
+        ]);
+
+        $response = $this->getJson('/api/products');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data.0.prices');
+        $response->assertJsonPath('data.0.prices.0.min_quantity', 1);
+        $response->assertJsonPath('data.0.prices.1.min_quantity', 10);
     }
 
     public function test_filters_products_by_brand_and_reference(): void
