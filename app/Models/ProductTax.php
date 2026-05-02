@@ -14,6 +14,8 @@ class ProductTax extends Model
     /** @use HasFactory<ProductTaxFactory> */
     use HasFactory;
 
+    protected $fillable = ['country_code', 'type', 'rate', 'amount', 'currency'];
+
     protected $casts = [
         'rate' => 'decimal:4',
         'amount' => 'decimal:4',

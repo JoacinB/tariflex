@@ -14,6 +14,8 @@ class ProductPrice extends Model
     /** @use HasFactory<ProductPriceFactory> */
     use HasFactory;
 
+    protected $fillable = ['min_quantity', 'price', 'currency'];
+
     protected $casts = [
         'min_quantity' => 'integer',
         'price' => 'decimal:4',
