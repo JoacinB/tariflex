@@ -7,6 +7,7 @@ namespace App\Importing\Parsers;
 use App\Importing\Contracts\SupplierParser;
 use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
+use App\Importing\DTOs\ImportedTaxDTO;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -18,6 +19,11 @@ final class AcmeParser implements SupplierParser
         'H' => 1,
         'I' => 10,
         'J' => 50,
+    ];
+
+    private const TAX_COUNTRIES = [
+        'K' => 'ES',
+        'L' => 'FR',
     ];
 
     public function parse(string $filePath): iterable
@@ -35,6 +41,7 @@ final class AcmeParser implements SupplierParser
                 supplierReference: (string) $reference,
                 brand: (string) $sheet->getCell('B'.$row->getRowIndex())->getValue(),
                 prices: $this->prices($sheet, $row->getRowIndex()),
+                taxes: $this->taxes($sheet, $row->getRowIndex()),
             );
         }
     }
@@ -58,5 +65,28 @@ final class AcmeParser implements SupplierParser
         }
 
         return $prices;
+    }
+
+    /**
+     * @return list<ImportedTaxDTO>
+     */
+    private function taxes(Worksheet $sheet, int $rowIndex): array
+    {
+        $taxes = [];
+        foreach (self::TAX_COUNTRIES as $column => $countryCode) {
+            $value = $sheet->getCell($column.$rowIndex)->getValue();
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $taxes[] = new ImportedTaxDTO(
+                countryCode: $countryCode,
+                type: 'percentage',
+                rate: (float) $value,
+                amount: null,
+                currency: null,
+            );
+        }
+
+        return $taxes;
     }
 }
