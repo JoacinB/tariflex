@@ -21,6 +21,18 @@ final class ParserRegistryTest extends TestCase
 
         $this->assertInstanceOf(FakeParser::class, $registry->resolve('fake'));
     }
+
+    public function test_throws_parser_not_found_exception_for_unknown_supplier_code(): void
+    {
+        config()->set('importing.parsers', []);
+
+        $registry = $this->app->make(ParserRegistry::class);
+
+        $this->expectException(ParserNotFoundException::class);
+        $this->expectExceptionMessage('unknown');
+
+        $registry->resolve('unknown');
+    }
 }
 
 final class FakeParser implements SupplierParser
