@@ -10,6 +10,8 @@ use App\Importing\DTOs\ImportSummary;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Supplier;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 final class ImportService
 {
@@ -20,8 +22,15 @@ final class ImportService
         $supplier = Supplier::where('code', $supplierCode)->firstOrFail();
         $summary = new ImportSummary;
 
+        $row = 0;
         foreach ($this->parser->parse($filePath) as $dto) {
-            $this->persist($supplier, $dto, $summary);
+            $row++;
+
+            try {
+                DB::transaction(fn () => $this->persist($supplier, $dto, $summary));
+            } catch (Throwable $e) {
+                $summary->errors[] = ['row' => $row, 'error' => $e->getMessage()];
+            }
         }
 
         return $summary;
