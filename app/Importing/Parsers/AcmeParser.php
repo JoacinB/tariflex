@@ -5,32 +5,58 @@ declare(strict_types=1);
 namespace App\Importing\Parsers;
 
 use App\Importing\Contracts\SupplierParser;
+use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 final class AcmeParser implements SupplierParser
 {
+    private const CURRENCY = 'EUR';
+
+    private const PRICE_TIERS = [
+        'H' => 1,
+        'I' => 10,
+        'J' => 50,
+    ];
+
     public function parse(string $filePath): iterable
     {
         $sheet = IOFactory::load($filePath)->getActiveSheet();
 
         foreach ($sheet->getRowIterator(2) as $row) {
-            $cells = $row->getCellIterator();
-            $cells->setIterateOnlyExistingCells(false);
+            $reference = $sheet->getCell('A'.$row->getRowIndex())->getValue();
 
-            $values = [];
-            foreach ($cells as $cell) {
-                $values[] = $cell->getValue();
-            }
-
-            if ($values[0] === null || $values[0] === '') {
+            if ($reference === null || $reference === '') {
                 continue;
             }
 
             yield new ImportedProductDTO(
-                supplierReference: (string) $values[0],
-                brand: (string) $values[1],
+                supplierReference: (string) $reference,
+                brand: (string) $sheet->getCell('B'.$row->getRowIndex())->getValue(),
+                prices: $this->prices($sheet, $row->getRowIndex()),
             );
         }
+    }
+
+    /**
+     * @return list<ImportedPriceDTO>
+     */
+    private function prices(Worksheet $sheet, int $rowIndex): array
+    {
+        $prices = [];
+        foreach (self::PRICE_TIERS as $column => $minQuantity) {
+            $value = $sheet->getCell($column.$rowIndex)->getValue();
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $prices[] = new ImportedPriceDTO(
+                minQuantity: $minQuantity,
+                price: (float) $value,
+                currency: self::CURRENCY,
+            );
+        }
+
+        return $prices;
     }
 }
