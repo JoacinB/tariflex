@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\ProductPrice;
+use App\Models\ProductTax;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -69,6 +70,42 @@ final class ProductsIndexTest extends TestCase
         $response->assertJsonCount(2, 'data.0.prices');
         $response->assertJsonPath('data.0.prices.0.min_quantity', 1);
         $response->assertJsonPath('data.0.prices.1.min_quantity', 10);
+    }
+
+    public function test_response_includes_taxes_with_type_rate_and_amount(): void
+    {
+        $product = Product::factory()->create();
+        ProductTax::factory()->for($product)->create([
+            'country_code' => 'ES',
+            'type' => 'percentage',
+            'rate' => 21.00,
+            'amount' => null,
+            'currency' => null,
+        ]);
+        ProductTax::factory()->for($product)->create([
+            'country_code' => 'FR',
+            'type' => 'fixed',
+            'rate' => null,
+            'amount' => 5.50,
+            'currency' => 'EUR',
+        ]);
+
+        $response = $this->getJson('/api/products');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data.0.taxes');
+        $response->assertJsonFragment([
+            'country_code' => 'ES',
+            'type' => 'percentage',
+            'rate' => 21.0,
+            'amount' => null,
+        ]);
+        $response->assertJsonFragment([
+            'country_code' => 'FR',
+            'type' => 'fixed',
+            'rate' => null,
+            'amount' => 5.5,
+        ]);
     }
 
     public function test_filters_products_by_brand_and_reference(): void
