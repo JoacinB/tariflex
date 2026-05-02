@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\Brand;
+use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,5 +19,19 @@ final class ProductsIndexTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('data', []);
+    }
+
+    public function test_filters_products_by_brand_name(): void
+    {
+        $acme = Brand::factory()->create(['name' => 'Acme']);
+        $globex = Brand::factory()->create(['name' => 'Globex']);
+
+        Product::factory()->for($acme)->count(2)->create();
+        Product::factory()->for($globex)->count(3)->create();
+
+        $response = $this->getJson('/api/products?brand=Acme');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
     }
 }
