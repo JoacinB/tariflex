@@ -23,7 +23,7 @@ final class ProductController extends Controller
                     $request->filled('reference'),
                     fn ($query) => $query->withReference((string) $request->string('reference'))
                 )
-                ->paginate()
+                ->paginate($request->integer('per_page') ?: null)
         );
     }
 }
