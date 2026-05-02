@@ -24,4 +24,9 @@ class Product extends Model
     {
         $query->whereHas('brand', fn (Builder $q) => $q->where('name', $name));
     }
+
+    public function scopeWithReference(Builder $query, string $reference): void
+    {
+        $query->where('supplier_reference', $reference);
+    }
 }

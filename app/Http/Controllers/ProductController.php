@@ -19,6 +19,10 @@ final class ProductController extends Controller
                     $request->filled('brand'),
                     fn ($query) => $query->ofBrand((string) $request->string('brand'))
                 )
+                ->when(
+                    $request->filled('reference'),
+                    fn ($query) => $query->withReference((string) $request->string('reference'))
+                )
                 ->paginate()
         );
     }

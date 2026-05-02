@@ -20,6 +20,7 @@ class ProductFactory extends Factory
     {
         return [
             'brand_id' => Brand::factory(),
+            'supplier_reference' => fake()->unique()->bothify('REF-####'),
         ];
     }
 }
