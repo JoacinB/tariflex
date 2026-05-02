@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 final class ProductController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        return JsonResource::collection(
+        return ProductResource::collection(
             Product::query()
+                ->with('prices')
                 ->when(
                     $request->filled('brand'),
                     fn ($query) => $query->ofBrand((string) $request->string('brand'))
