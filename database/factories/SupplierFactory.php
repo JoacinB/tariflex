@@ -2,15 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Brand;
-use App\Models\Product;
 use App\Models\Supplier;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Product>
+ * @extends Factory<Supplier>
  */
-class ProductFactory extends Factory
+class SupplierFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -20,9 +18,8 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'brand_id' => Brand::factory(),
-            'supplier_id' => Supplier::factory(),
-            'supplier_reference' => fake()->unique()->bothify('REF-####'),
+            'code' => $this->faker->unique()->slug(2),
+            'name' => $this->faker->company(),
         ];
     }
 }
