@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 use App\Importing\Parsers\AcmeParser;
+use App\Importing\Parsers\GlobalTechParser;
 
 return [
 
@@ -18,7 +19,7 @@ return [
 
     'parsers' => [
         'acme' => AcmeParser::class,
-        // 'globaltech' => \App\Importing\Parsers\GlobalTechParser::class,
+        'globaltech' => GlobalTechParser::class,
     ],
 
 ];
