@@ -8,8 +8,11 @@ use App\Importing\Contracts\SupplierParser;
 use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
 use App\Importing\DTOs\ImportedTaxDTO;
+use App\Importing\Exceptions\ParseException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Throwable;
 
 final class AcmeParser implements SupplierParser
 {
@@ -28,7 +31,14 @@ final class AcmeParser implements SupplierParser
 
     public function parse(string $filePath): iterable
     {
-        $sheet = IOFactory::load($filePath)->getActiveSheet();
+        try {
+            $sheet = IOFactory::load($filePath)->getActiveSheet();
+        } catch (ReaderException|Throwable $e) {
+            throw new ParseException(
+                'The file could not be read as an Excel spreadsheet: '.$e->getMessage(),
+                previous: $e,
+            );
+        }
 
         foreach ($sheet->getRowIterator(2) as $row) {
             $reference = $sheet->getCell('A'.$row->getRowIndex())->getValue();
