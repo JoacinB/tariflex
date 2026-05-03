@@ -7,7 +7,10 @@ namespace Tests\Unit\Importing\Parsers;
 use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
 use App\Importing\DTOs\ImportedTaxDTO;
+use App\Importing\Exceptions\ParseException;
 use App\Importing\Parsers\GlobalTechParser;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PHPUnit\Framework\TestCase;
 
 final class GlobalTechParserTest extends TestCase
@@ -39,6 +42,47 @@ final class GlobalTechParserTest extends TestCase
             [new ImportedPriceDTO(minQuantity: 1, price: 12.00, currency: 'USD')],
             $dtos[1]->prices,
         );
+    }
+
+    public function test_throws_parse_exception_with_row_when_country_code_is_invalid(): void
+    {
+        $tmp = $this->buildSpreadsheetWithBadCountry('usa');
+
+        try {
+            iterator_to_array((new GlobalTechParser)->parse($tmp), false);
+            $this->fail('Expected ParseException was not thrown.');
+        } catch (ParseException $e) {
+            $this->assertSame(2, $e->row);
+            $this->assertMatchesRegularExpression('/country/i', $e->getMessage());
+            $this->assertStringContainsString('usa', $e->getMessage());
+        }
+    }
+
+    private function buildSpreadsheetWithBadCountry(string $code): string
+    {
+        $spreadsheet = new Spreadsheet;
+        $products = $spreadsheet->getActiveSheet();
+        $products->setTitle('Products');
+        $products->fromArray([['Part Number', 'Brand'], ['GT-100', 'TechCo']], null, 'A1');
+
+        $pricing = $spreadsheet->createSheet();
+        $pricing->setTitle('Pricing');
+        $pricing->fromArray([
+            ['Part Number', 'Min Qty', 'Price', 'Currency'],
+            ['GT-100', 1, 5.50, 'USD'],
+        ], null, 'A1');
+
+        $taxes = $spreadsheet->createSheet();
+        $taxes->setTitle('Taxes');
+        $taxes->fromArray([
+            ['Part Number', 'Country', 'Unit', 'Type', 'Rate', 'Amount', 'Currency'],
+            ['GT-100', $code, 'unit', 'Rate', 7.5, null, null],
+        ], null, 'A1');
+
+        $tmp = tempnam(sys_get_temp_dir(), 'gt_').'.xlsx';
+        (new Xlsx($spreadsheet))->save($tmp);
+
+        return $tmp;
     }
 
     public function test_attaches_taxes_sheet_rows_with_rate_or_amount_to_their_product(): void
