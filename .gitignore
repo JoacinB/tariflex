@@ -55,7 +55,7 @@ GEMINI.md
 .agents/
 .claude/
 *.sqlite
-docs/
+docs/*.md
 .mcp.json
 .npmrc
 boost.json
