@@ -29,6 +29,11 @@ final class AcmeParser implements SupplierParser
         'L' => 'FR',
     ];
 
+    private const REQUIRED_HEADERS = [
+        'A' => 'Referencia',
+        'B' => 'Marca',
+    ];
+
     public function parse(string $filePath): iterable
     {
         try {
@@ -38,6 +43,15 @@ final class AcmeParser implements SupplierParser
                 'The file could not be read as an Excel spreadsheet: '.$e->getMessage(),
                 previous: $e,
             );
+        }
+
+        foreach (self::REQUIRED_HEADERS as $column => $expected) {
+            $actual = $sheet->getCell($column.'1')->getValue();
+            if ($actual !== $expected) {
+                throw new ParseException(
+                    "Missing required column [{$expected}] in column {$column} of the header row.",
+                );
+            }
         }
 
         foreach ($sheet->getRowIterator(2) as $row) {
