@@ -50,4 +50,18 @@ final class AcmeParserTest extends TestCase
             $dtos[0]->taxes,
         );
     }
+
+    public function test_skips_blank_tier_and_country_columns_for_minimal_row(): void
+    {
+        $dtos = iterator_to_array((new AcmeParser)->parse(self::FIXTURE), false);
+
+        $this->assertEquals(
+            [new ImportedPriceDTO(minQuantity: 1, price: 50.0, currency: 'EUR')],
+            $dtos[1]->prices,
+        );
+        $this->assertEquals(
+            [new ImportedTaxDTO(countryCode: 'ES', type: 'percentage', rate: 21.0, amount: null, currency: null)],
+            $dtos[1]->taxes,
+        );
+    }
 }
