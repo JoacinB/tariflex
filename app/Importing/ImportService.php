@@ -6,6 +6,7 @@ namespace App\Importing;
 
 use App\Importing\DTOs\ImportedProductDTO;
 use App\Importing\DTOs\ImportSummary;
+use App\Importing\Exceptions\ParseException;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Supplier;
@@ -23,14 +24,18 @@ final class ImportService
         $summary = new ImportSummary;
 
         $row = 0;
-        foreach ($parser->parse($filePath) as $dto) {
-            $row++;
+        try {
+            foreach ($parser->parse($filePath) as $dto) {
+                $row++;
 
-            try {
-                DB::transaction(fn () => $this->persist($supplier, $dto, $summary));
-            } catch (Throwable $e) {
-                $summary->errors[] = ['row' => $row, 'error' => $e->getMessage()];
+                try {
+                    DB::transaction(fn () => $this->persist($supplier, $dto, $summary));
+                } catch (Throwable $e) {
+                    $summary->errors[] = ['row' => $row, 'error' => $e->getMessage()];
+                }
             }
+        } catch (ParseException $e) {
+            $summary->errors[] = ['row' => $e->row, 'error' => $e->getMessage()];
         }
 
         return $summary;

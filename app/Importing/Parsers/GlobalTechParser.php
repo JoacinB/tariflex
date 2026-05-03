@@ -8,6 +8,7 @@ use App\Importing\Contracts\SupplierParser;
 use App\Importing\DTOs\ImportedPriceDTO;
 use App\Importing\DTOs\ImportedProductDTO;
 use App\Importing\DTOs\ImportedTaxDTO;
+use App\Importing\Exceptions\ParseException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
@@ -86,9 +87,17 @@ final class GlobalTechParser implements SupplierParser
             $rate = $sheet->getCell('E'.$rowIndex)->getValue();
             $amount = $sheet->getCell('F'.$rowIndex)->getValue();
             $currency = $sheet->getCell('G'.$rowIndex)->getValue();
+            $countryCode = (string) $sheet->getCell('B'.$rowIndex)->getValue();
+
+            if (preg_match('/^[A-Z]{2}$/', $countryCode) !== 1) {
+                throw new ParseException(
+                    "Invalid country code [{$countryCode}] in Taxes sheet (expected ISO 3166-1 alpha-2).",
+                    row: $rowIndex,
+                );
+            }
 
             $byPart[(string) $partNumber][] = new ImportedTaxDTO(
-                countryCode: (string) $sheet->getCell('B'.$rowIndex)->getValue(),
+                countryCode: $countryCode,
                 type: $taxType === 'Amount' ? 'fixed' : 'percentage',
                 rate: $rate === null || $rate === '' ? null : (float) $rate,
                 amount: $amount === null || $amount === '' ? null : (float) $amount,
