@@ -81,6 +81,12 @@ final class AcmeParser implements SupplierParser
             if ($value === null || $value === '') {
                 continue;
             }
+            if (! is_numeric($value)) {
+                throw new ParseException(
+                    "Price in column {$column} is not numeric (got: ".var_export($value, true).').',
+                    row: $rowIndex,
+                );
+            }
             $prices[] = new ImportedPriceDTO(
                 minQuantity: $minQuantity,
                 price: (float) $value,
