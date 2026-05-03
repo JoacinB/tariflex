@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use App\Importing\Parsers\AcmeParser;
 
 return [
 
@@ -16,7 +17,7 @@ return [
     */
 
     'parsers' => [
-        // 'acme'       => \App\Importing\Parsers\AcmeParser::class,
+        'acme' => AcmeParser::class,
         // 'globaltech' => \App\Importing\Parsers\GlobalTechParser::class,
     ],
 
