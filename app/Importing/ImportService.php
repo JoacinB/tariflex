@@ -43,7 +43,7 @@ final class ImportService
 
     private function persist(Supplier $supplier, ImportedProductDTO $dto, ImportSummary $summary): void
     {
-        $brand = Brand::firstOrCreate(['name' => $dto->brand]);
+        $brand = Brand::updateOrCreate(['name' => $dto->brand], []);
 
         $existing = Product::where('supplier_id', $supplier->id)
             ->where('supplier_reference', $dto->supplierReference)
