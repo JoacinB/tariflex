@@ -50,6 +50,14 @@ final class ProductsIndexTest extends TestCase
         $response->assertJsonPath('meta.total', 7);
     }
 
+    public function test_rejects_per_page_above_max(): void
+    {
+        $response = $this->getJson('/api/products?per_page=9999999');
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['per_page']);
+    }
+
     public function test_response_includes_price_tiers_ordered_by_min_quantity(): void
     {
         $product = Product::factory()->create();
