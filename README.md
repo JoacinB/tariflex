@@ -81,7 +81,12 @@ Filtros soportados:
 
 - `brand` — coincidencia exacta del nombre de marca.
 - `reference` — coincidencia exacta de `supplier_reference`.
-- `per_page` — tamaño de página (paginador estándar de Laravel).
+- `per_page` — tamaño de página (entero entre 1 y 50). Valores fuera de rango devuelven `422`.
+- `page` — número de página (entero ≥ 1).
+
+```bash
+curl -H "Accept: application/json" "http://127.0.0.1:8000/api/products?per_page=20&page=2"
+```
 
 ---
 
